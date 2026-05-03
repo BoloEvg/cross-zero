@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Крестики-Нолики</title>
+    <style>
+        :root {
+            --bg-start: #0f172a;
+            --bg-mid: #1e293b;
+            --bg-end: #0b1120;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.18);
+            --text-main: #e2e8f0;
+            --text-soft: #94a3b8;
+            --x-color: #f87171;
+            --o-color: #60a5fa;
+            --win-color: #22c55e;
+            --accent: #38bdf8;
+            --shadow: 0 20px 50px rgba(2, 6, 23, 0.5);
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at 15% 15%, #1d4ed8 0%, transparent 45%),
+                        radial-gradient(circle at 85% 75%, #7c3aed 0%, transparent 40%),
+                        linear-gradient(140deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        .game-container {
+            width: min(96vw, 460px);
+            backdrop-filter: blur(12px);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 28px 24px 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(1.8rem, 4.5vw, 2.4rem);
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+
+        .status {
+            font-size: 1.15rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 1.5rem;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .controls {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-row label {
+            font-size: 0.9rem;
+            color: var(--text-soft);
+            min-width: 110px;
+        }
+
+        .control-row select,
+        .control-row button {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-main);
+            padding: 7px 10px;
+            font-size: 0.92rem;
+        }
+
+        .control-row button {
+            cursor: pointer;
+        }
+
+        .scoreboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .score-item {
+            padding: 9px 8px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .score-item strong {
+            display: block;
+            font-size: 1.1rem;
+            margin-top: 2px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.93), rgba(226, 232, 240, 0.95));
+            border: none;
+            border-radius: 14px;
+            font-size: clamp(2rem, 10vw, 3rem);
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.25s ease;
+            color: #0f172a;
+            box-shadow: inset 0 -3px 10px rgba(148, 163, 184, 0.3);
+        }
+
+        .cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25);
+        }
+
+        .cell.x {
+            color: var(--x-color);
+        }
+
+        .cell.o {
+            color: var(--o-color);
+        }
+
+        .reset-btn {
+            margin-top: 24px;
+            padding: 12px 26px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(140deg, var(--accent), #2563eb);
+            color: #eff6ff;
+            border: none;
+            border-radius: 999px;
+            transition: transform 0.15s ease, filter 0.25s ease, box-shadow 0.25s ease;
+            letter-spacing: 0.3px;
+            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .reset-btn:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        .cell.winner {
+            background: linear-gradient(145deg, #22c55e, #16a34a) !important;
+            color: white !important;
+            animation: pulse 1s infinite;
+            box-shadow: 0 8px 18px rgba(34, 197, 94, 0.4);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 420px) {
+            .game-container {
+                padding: 22px 16px 24px;
+            }
+
+            .status {
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 900px) {
+            body {
+                padding: 36px;
+            }
+
+            .game-container {
+                width: min(96vw, 1060px);
+                display: grid;
+                grid-template-columns: 340px minmax(420px, 1fr);
+                grid-template-areas:
+                    "title board"
+                    "controls board"
+                    "score board"
+                    "status board"
+                    "actions board";
+                gap: 16px 24px;
+                align-items: start;
+                text-align: left;
+                padding: 30px;
+            }
+
+            h1 {
+                grid-area: title;
+                margin: 0;
+                font-size: 2.2rem;
+            }
+
+            .controls {
+                grid-area: controls;
+                margin-bottom: 0;
+            }
+
+            .control-row {
+                flex-wrap: nowrap;
+            }
+
+            .control-row label {
+                min-width: 120px;
+            }
+
+            .control-row select,
+            .control-row button {
+                width: 100%;
+            }
+
+            .scoreboard {
+                grid-area: score;
+                margin-bottom: 0;
+            }
+
+            .status {
+                grid-area: status;
+                margin-bottom: 0;
+            }
+
+            .game-board {
+                grid-area: board;
+                margin: 0 auto;
+                width: min(100%, 620px);
+                gap: 16px;
+                padding: 18px;
+                border-radius: 22px;
+            }
+
+            .cell {
+                font-size: clamp(3rem, 4.5vw, 4.5rem);
+                border-radius: 18px;
+            }
+
+            .action-buttons {
+                grid-area: actions;
+                justify-content: flex-start;
+                margin-top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Крестики-Нолики</h1>
+
+        <div class="controls">
+            <div class="control-row">
+                <label for="modeSelect">Режим игры</label>
+                <select id="modeSelect">
+                    <option value="pvp">Игрок vs Игрок</option>
+                    <option value="ai">Игрок vs Бот</option>
+                </select>
+            </div>
+            <div class="control-row" id="difficultyRow">
+                <label for="difficultySelect">Сложность бота</label>
+                <select id="difficultySelect">
+                    <option value="easy">Легко</option>
+                    <option value="normal">Нормально</option>
+                    <option value="hard">Сложно</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <button id="undoBtn">Отменить ход</button>
+                <button id="resetScoreBtn">Сбросить счет</button>
+            </div>
+        </div>
+
+        <div class="scoreboard">
+            <div class="score-item">Победы X<strong id="scoreX">0</strong></div>
+            <div class="score-item">Победы O<strong id="scoreO">0</strong></div>
+            <div class="score-item">Ничьи<strong id="scoreDraw">0</strong></div>
+        </div>
+        
+        <div class="status" id="status">Ход игрока X</div>
+    
+        <div class="game-board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+    
+        <div class="action-buttons">
+            <button class="reset-btn" id="resetBtn">Начать заново</button>
+        </div>
+    </div>
+
+    <script>
+        const boardElement = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.getElementById('status');
+        const resetBtn = document.getElementById('resetBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const resetScoreBtn = document.getElementById('resetScoreBtn');
+        const modeSelect = document.getElementById('modeSelect');
+        const difficultyRow = document.getElementById('difficultyRow');
+        const difficultySelect = document.getElementById('difficultySelect');
+        const scoreXElement = document.getElementById('scoreX');
+        const scoreOElement = document.getElementById('scoreO');
+        const scoreDrawElement = document.getElementById('scoreDraw');
+
+        let currentPlayer = "X";
+        let gameActive = true;
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let mode = "pvp";
+        let moveHistory = [];
+        let botThinking = false;
+        let scores = loadScores();
+        let audioCtx = null;
+
+        const winningConditions = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        updateScoreUI();
+        updateStatus();
+        updateDifficultyVisibility();
+
+        function ensureAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return null;
+                audioCtx = new AudioContextClass();
+            }
+            if (audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playTone(frequency, duration, type = "sine", volume = 0.06, startDelay = 0) {
+            const ctx = ensureAudioContext();
+            if (!ctx) return;
+
+            const now = ctx.currentTime + startDelay;
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, now);
+
+            gainNode.gain.setValueAtTime(0.0001, now);
+            gainNode.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            oscillator.start(now);
+            oscillator.stop(now + duration + 0.02);
+        }
+
+        function playMoveSound(player) {
+            if (player === "X") {
+                playTone(520, 0.08, "square", 0.04);
+            } else {
+                playTone(420, 0.1, "triangle", 0.045);
+            }
+        }
+
+        function playWinSound() {
+            playTone(523, 0.09, "triangle", 0.055, 0);
+            playTone(659, 0.1, "triangle", 0.055, 0.08);
+            playTone(784, 0.14, "triangle", 0.06, 0.16);
+        }
+
+        function playDrawSound() {
+            playTone(360, 0.1, "sine", 0.045, 0);
+            playTone(320, 0.1, "sine", 0.045, 0.08);
+        }
+
+        function playInvalidSound() {
+            playTone(190, 0.07, "sawtooth", 0.03);
+        }
+
+        function handleCellClick(clickedCellEvent) {
+            const clickedCell = clickedCellEvent.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+            if (gameState[clickedCellIndex] !== "" || !gameActive || botThinking) {
+                playInvalidSound();
+                return;
+            }
+
+            if (mode === "ai" && currentPlayer === "O") {
+                playInvalidSound();
+                return;
+            }
+
+            updateCell(clickedCell, clickedCellIndex);
+            checkResult();
+
+            if (gameActive && mode === "ai" && currentPlayer === "O") {
+                runBotTurn();
+            }
+        }
+
+        function updateCell(cell, index) {
+            gameState[index] = currentPlayer;
+            cell.innerText = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+            moveHistory.push(index);
+            playMoveSound(currentPlayer);
+        }
+
+        function changePlayer() {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            updateStatus();
+        }
+
+        function checkResult() {
+            let roundWon = false;
+            let winCombo = null;
+
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    roundWon = true;
+                    winCombo = [a, b, c];
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusText.innerText = `Игрок ${currentPlayer} ПОБЕДИЛ!`;
+                statusText.style.color = "#2ecc71";
+                gameActive = false;
+                highlightWinner(winCombo);
+                updateScores(currentPlayer);
+                playWinSound();
+                return;
+            }
+
+            let roundDraw = !gameState.includes("");
+            if (roundDraw) {
+                statusText.innerText = "НИЧЬЯ!";
+                statusText.style.color = "#fdbb2d";
+                gameActive = false;
+                updateScores("draw");
+                playDrawSound();
+                return;
+            }
+
+            changePlayer();
+        }
+
+        function highlightWinner(combo) {
+            combo.forEach(index => {
+                cells[index].classList.add('winner');
+            });
+        }
+
+        function restartGame() {
+            currentPlayer = "X";
+            gameActive = true;
+            botThinking = false;
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            moveHistory = [];
+            updateStatus();
+            cells.forEach(cell => {
+                cell.innerText = "";
+                cell.classList.remove('x', 'o', 'winner');
+            });
+        }
+
+        function undoMove() {
+            if (!moveHistory.length || !gameActive || botThinking) {
+                return;
+            }
+
+            const lastIndex = moveHistory.pop();
+            gameState[lastIndex] = "";
+            cells[lastIndex].innerText = "";
+            cells[lastIndex].classList.remove('x', 'o', 'winner');
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            updateStatus();
+        }
+
+        function updateStatus() {
+            if (!gameActive) {
+                return;
+            }
+            if (mode === "ai" && currentPlayer === "O") {
+                statusText.innerText = "Ход бота O...";
+                statusText.style.color = "var(--o-color)";
+                return;
+            }
+            statusText.innerText = `Ход игрока ${currentPlayer}`;
+            statusText.style.color = "var(--text-main)";
+        }
+
+        function updateScores(winner) {
+            if (winner === "X") scores.x += 1;
+            if (winner === "O") scores.o += 1;
+            if (winner === "draw") scores.draw += 1;
+            saveScores();
+            updateScoreUI();
+        }
+
+        function updateScoreUI() {
+            scoreXElement.innerText = scores.x;
+            scoreOElement.innerText = scores.o;
+            scoreDrawElement.innerText = scores.draw;
+        }
+
+        function loadScores() {
+            try {
+                const saved = JSON.parse(localStorage.getItem("tttScores"));
+                if (saved && typeof saved.x === "number" && typeof saved.o === "number" && typeof saved.draw === "number") {
+                    return saved;
+                }
+            } catch (error) {
+                // Ignore malformed local storage data
+            }
+            return { x: 0, o: 0, draw: 0 };
+        }
+
+        function saveScores() {
+            localStorage.setItem("tttScores", JSON.stringify(scores));
+        }
+
+        function updateDifficultyVisibility() {
+            const isAiMode = mode === "ai";
+            difficultySelect.disabled = !isAiMode;
+            difficultyRow.style.display = isAiMode ? "flex" : "none";
+        }
+
+        function availableMoves(state = gameState) {
+            const moves = [];
+            state.forEach((value, index) => {
+                if (!value) moves.push(index);
+            });
+            return moves;
+        }
+
+        function runBotTurn() {
+            botThinking = true;
+            updateStatus();
+            setTimeout(() => {
+                const move = getBotMove();
+                if (move !== null && gameActive) {
+                    const cell = cells[move];
+                    updateCell(cell, move);
+                    checkResult();
+                }
+                botThinking = false;
+                updateStatus();
+            }, 500);
+        }
+
+        function getBotMove() {
+            const moves = availableMoves();
+            if (!moves.length) return null;
+
+            const difficulty = difficultySelect.value;
+            if (difficulty === "easy") {
+                return moves[Math.floor(Math.random() * moves.length)];
+            }
+
+            if (difficulty === "normal" && Math.random() < 0.45) {
+                return moves[Math.floor(Math.random() * moves.length)];
+            }
+
+            return getBestMoveForO(gameState);
+        }
+
+        function getBestMoveForO(state) {
+            let bestScore = -Infinity;
+            let bestMove = null;
+
+            for (const move of availableMoves(state)) {
+                state[move] = "O";
+                const score = minimax(state, 0, false);
+                state[move] = "";
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            return bestMove;
+        }
+
+        function minimax(state, depth, isMaximizing) {
+            const result = getTerminalResult(state);
+            if (result !== null) {
+                if (result === "O") return 10 - depth;
+                if (result === "X") return depth - 10;
+                return 0;
+            }
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (const move of availableMoves(state)) {
+                    state[move] = "O";
+                    bestScore = Math.max(bestScore, minimax(state, depth + 1, false));
+                    state[move] = "";
+                }
+                return bestScore;
+            }
+
+            let bestScore = Infinity;
+            for (const move of availableMoves(state)) {
+                state[move] = "X";
+                bestScore = Math.min(bestScore, minimax(state, depth + 1, true));
+                state[move] = "";
+            }
+            return bestScore;
+        }
+
+        function getTerminalResult(state) {
+            for (const [a, b, c] of winningConditions) {
+                if (state[a] && state[a] === state[b] && state[a] === state[c]) {
+                    return state[a];
+                }
+            }
+            return state.includes("") ? null : "draw";
+        }
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        resetBtn.addEventListener('click', restartGame);
+        undoBtn.addEventListener('click', undoMove);
+        resetScoreBtn.addEventListener('click', () => {
+            scores = { x: 0, o: 0, draw: 0 };
+            saveScores();
+            updateScoreUI();
+        });
+        modeSelect.addEventListener('change', () => {
+            mode = modeSelect.value;
+            updateDifficultyVisibility();
+            restartGame();
+        });
+
+    </script>
+</body>
+</html>
